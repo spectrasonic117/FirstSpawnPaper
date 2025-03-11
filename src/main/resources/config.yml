@@ -1,0 +1,10 @@
+enabled: false
+debug: false
+welcome-message: "<green>Bienvenido"
+
+firstSpawn:
+    world: world
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    direction: SOUTH
