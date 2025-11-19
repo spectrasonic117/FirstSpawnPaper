@@ -1,6 +1,10 @@
 enabled: false
 debug: false
-welcome-message: "<green>Bienvenido"
+
+welcome-message:
+    enabled: false
+    prefix: "<gradient:blue:white>[TELCEL]"
+    message: <green>Bienvenido
 
 force_spawn: false
 

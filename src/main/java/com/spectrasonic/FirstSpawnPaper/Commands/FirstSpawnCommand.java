@@ -28,6 +28,8 @@ public class FirstSpawnCommand extends BaseCommand {
                 "<gray>/firstspawn toggle</gray> - <white>Habilitar/Deshabilitar el plugin</white>");
         MessageUtils.sendMessage(sender,
                 "<gray>/firstspawn forcespawn <true|false></gray> - <white>Forzar spawn en cada entrada al servidor</white>");
+        MessageUtils.sendMessage(sender,
+                "<gray>/firstspawn welcomemessage <true|false></gray> - <white>Activar/Desactivar el mensaje de bienvenida</white>");
         MessageUtils.sendMessage(sender, "<gray>/firstspawn reload</gray> - <white>Recargar la configuración</white>");
         MessageUtils.sendMessage(sender, "<gray>/firstspawn debug</gray> - <white>Alternar el modo debug</white>");
     }
@@ -58,9 +60,14 @@ public class FirstSpawnCommand extends BaseCommand {
                 + (manager.isForceSpawn() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>"));
         MessageUtils.sendMessage(sender, "<gray>Ubicación actual del spawn:</gray> <yellow>"
                 + manager.formatLocation(manager.getFirstSpawnLocation()) + "</yellow>");
-        MessageUtils.sendMessage(sender,
-                "<gray>Mensaje de bienvenida:</gray> " + (manager.getWelcomeMessage().isEmpty() ? "<red>Ninguno</red>"
-                        : "<green>" + manager.getWelcomeMessage() + "</green>"));
+        MessageUtils.sendMessage(sender, "<gray>Mensaje de bienvenida:</gray> "
+                + (manager.isWelcomeMessageEnabled() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>"));
+        if (manager.isWelcomeMessageEnabled()) {
+            String formattedMessage = manager.getFormattedWelcomeMessage();
+            if (!formattedMessage.isEmpty()) {
+                MessageUtils.sendMessage(sender, "<gray>  Mensaje:</gray> " + formattedMessage);
+            }
+        }
     }
 
     @Subcommand("test")
@@ -73,8 +80,9 @@ public class FirstSpawnCommand extends BaseCommand {
         }
         player.teleport(manager.getFirstSpawnLocation());
         MessageUtils.sendMessage(player, "<green>Teletransportado a la ubicación de primer spawn!</green>");
-        if (!manager.getWelcomeMessage().isEmpty()) {
-            MessageUtils.sendMessage(player, manager.getWelcomeMessage());
+        String formattedWelcomeMessage = manager.getFormattedWelcomeMessage();
+        if (!formattedWelcomeMessage.isEmpty()) {
+            MessageUtils.sendRawMessage(player, formattedWelcomeMessage);
         }
     }
 
@@ -112,6 +120,24 @@ public class FirstSpawnCommand extends BaseCommand {
         } else {
             MessageUtils.sendMessage(sender,
                     "<yellow>Solo los jugadores nuevos serán teletransportados al spawn</yellow>");
+        }
+    }
+
+    @Subcommand("welcomemessage")
+    @Description("Configurar si se muestra el mensaje de bienvenida")
+    @CommandPermission("firstspawn.welcomemessage")
+    @CommandCompletion("true|false")
+    public void onWelcomeMessage(CommandSender sender, boolean value) {
+        manager.setWelcomeMessageEnabled(value);
+        manager.saveConfig();
+        MessageUtils.sendMessage(sender, "<gray>Mensaje de bienvenida ahora está</gray> "
+                + (value ? "<green>habilitado</green>" : "<red>deshabilitado</red>"));
+        if (value) {
+            MessageUtils.sendMessage(sender,
+                    "<yellow>Los jugadores verán el mensaje de bienvenida al entrar al servidor</yellow>");
+        } else {
+            MessageUtils.sendMessage(sender,
+                    "<yellow>Los jugadores no verán el mensaje de bienvenida</yellow>");
         }
     }
 

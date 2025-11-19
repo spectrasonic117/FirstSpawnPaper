@@ -26,6 +26,10 @@ public final class MessageUtils {
         sender.sendMessage(miniMessage.deserialize(PREFIX + message));
     }
 
+    public static void sendRawMessage(CommandSender sender, String message) {
+        sender.sendMessage(miniMessage.deserialize(message));
+    }
+
     public static void sendConsoleMessage(String message) {
         Bukkit.getConsoleSender().sendMessage(miniMessage.deserialize(PREFIX + message));
     }

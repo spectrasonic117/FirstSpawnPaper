@@ -17,6 +17,8 @@ public class FirstSpawnManager {
     private boolean enabled;
     private boolean debug;
     private boolean forceSpawn;
+    private boolean welcomeMessageEnabled;
+    private String welcomeMessagePrefix;
     private String welcomeMessage;
     private FileConfiguration config;
 
@@ -25,7 +27,9 @@ public class FirstSpawnManager {
         this.enabled = config.getBoolean("enabled", true);
         this.debug = config.getBoolean("debug", false);
         this.forceSpawn = config.getBoolean("force_spawn", false);
-        this.welcomeMessage = config.getString("welcome-message", "");
+        this.welcomeMessageEnabled = config.getBoolean("welcome-message.enabled", false);
+        this.welcomeMessagePrefix = config.getString("welcome-message.prefix", "");
+        this.welcomeMessage = config.getString("welcome-message.message", "");
 
         if (config.contains("firstSpawn")) {
             try {
@@ -86,7 +90,9 @@ public class FirstSpawnManager {
         config.set("enabled", enabled);
         config.set("debug", debug);
         config.set("force_spawn", forceSpawn);
-        config.set("welcome-message", welcomeMessage);
+        config.set("welcome-message.enabled", welcomeMessageEnabled);
+        config.set("welcome-message.prefix", welcomeMessagePrefix);
+        config.set("welcome-message.message", welcomeMessage);
         plugin.saveConfig();
     }
 
@@ -106,5 +112,16 @@ public class FirstSpawnManager {
         if (loc == null)
             return "Not set";
         return String.format("%s: %.1f, %.1f, %.1f", loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());
+    }
+
+    public String getFormattedWelcomeMessage() {
+        if (!welcomeMessageEnabled || welcomeMessage.isEmpty())
+            return "";
+
+        if (welcomeMessagePrefix != null && !welcomeMessagePrefix.isEmpty()) {
+            return welcomeMessagePrefix + " " + welcomeMessage;
+        }
+
+        return welcomeMessage;
     }
 }

@@ -32,8 +32,9 @@ public class PlayerJoinListener implements Listener {
             player.teleport(manager.getFirstSpawnLocation());
             player.setBedSpawnLocation(manager.getFirstSpawnLocation(), true);
 
-            if (!manager.getWelcomeMessage().isEmpty()) {
-                MessageUtils.sendMessage(player, manager.getWelcomeMessage());
+            String formattedWelcomeMessage = manager.getFormattedWelcomeMessage();
+            if (!formattedWelcomeMessage.isEmpty()) {
+                MessageUtils.sendRawMessage(player, formattedWelcomeMessage);
             }
 
             manager.logDebug("Teleported player " + player.getName() + " to first spawn location (force_spawn: "
