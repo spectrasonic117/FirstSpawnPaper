@@ -2,6 +2,8 @@ enabled: false
 debug: false
 welcome-message: "<green>Bienvenido"
 
+force_spawn: false
+
 firstSpawn:
     world: world
     x: 0.0

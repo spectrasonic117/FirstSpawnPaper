@@ -16,6 +16,7 @@ public class FirstSpawnManager {
     private Location firstSpawnLocation;
     private boolean enabled;
     private boolean debug;
+    private boolean forceSpawn;
     private String welcomeMessage;
     private FileConfiguration config;
 
@@ -23,16 +24,16 @@ public class FirstSpawnManager {
         this.config = plugin.getConfig();
         this.enabled = config.getBoolean("enabled", true);
         this.debug = config.getBoolean("debug", false);
+        this.forceSpawn = config.getBoolean("force_spawn", false);
         this.welcomeMessage = config.getString("welcome-message", "");
 
         if (config.contains("firstSpawn")) {
             try {
                 firstSpawnLocation = new Location(
-                    plugin.getServer().getWorld(config.getString("firstSpawn.world")),
-                    config.getDouble("firstSpawn.x"),
-                    config.getDouble("firstSpawn.y"),
-                    config.getDouble("firstSpawn.z")
-                );
+                        plugin.getServer().getWorld(config.getString("firstSpawn.world")),
+                        config.getDouble("firstSpawn.x"),
+                        config.getDouble("firstSpawn.y"),
+                        config.getDouble("firstSpawn.z"));
 
                 String direction = config.getString("firstSpawn.direction", "");
                 if (!direction.isEmpty()) {
@@ -84,6 +85,7 @@ public class FirstSpawnManager {
         }
         config.set("enabled", enabled);
         config.set("debug", debug);
+        config.set("force_spawn", forceSpawn);
         config.set("welcome-message", welcomeMessage);
         plugin.saveConfig();
     }
@@ -95,12 +97,14 @@ public class FirstSpawnManager {
     }
 
     public String formatLocation(Location loc) {
-        if (loc == null) return "Not set";
+        if (loc == null)
+            return "Not set";
         return String.format("%s: %.1f, %.1f, %.1f", loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());
     }
 
     private String formatLocationRaw(Location loc) {
-        if (loc == null) return "Not set";
+        if (loc == null)
+            return "Not set";
         return String.format("%s: %.1f, %.1f, %.1f", loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());
     }
 }
