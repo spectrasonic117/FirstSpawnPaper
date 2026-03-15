@@ -1,0 +1,5 @@
+name: FirstSpawnPaper
+version: '${version}'
+main: com.spectrasonic.FirstSpawnPaper.Main
+api-version: '1.21'
+authors: [Spectrasonic]

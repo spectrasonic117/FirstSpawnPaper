@@ -5,11 +5,9 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 public class FirstSpawnManager {
 
     private final JavaPlugin plugin;
@@ -20,7 +18,13 @@ public class FirstSpawnManager {
     private boolean welcomeMessageEnabled;
     private String welcomeMessagePrefix;
     private String welcomeMessage;
+    private String chatPrefix;
     private FileConfiguration config;
+    private MessageManager messageManager;
+
+    public FirstSpawnManager(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     public void loadConfig() {
         this.config = plugin.getConfig();
@@ -30,38 +34,59 @@ public class FirstSpawnManager {
         this.welcomeMessageEnabled = config.getBoolean("welcome-message.enabled", false);
         this.welcomeMessagePrefix = config.getString("welcome-message.prefix", "");
         this.welcomeMessage = config.getString("welcome-message.message", "");
+        this.chatPrefix = config.getString(
+            "chat-prefix",
+            "<gray>[<gold>FirstSpawnPaper</gold>]</gray> <gold>»</gold> "
+        );
+
+        messageManager = new MessageManager(plugin);
+        messageManager.loadMessages();
 
         if (config.contains("firstSpawn")) {
             try {
-                firstSpawnLocation = new Location(
-                        plugin.getServer().getWorld(config.getString("firstSpawn.world")),
-                        config.getDouble("firstSpawn.x"),
-                        config.getDouble("firstSpawn.y"),
-                        config.getDouble("firstSpawn.z"));
-
+                float yaw = (float) config.getDouble("firstSpawn.yaw", 0f);
                 String direction = config.getString("firstSpawn.direction", "");
-                if (!direction.isEmpty()) {
+
+                if (yaw == 0f && !direction.isEmpty()) {
                     switch (direction.toUpperCase()) {
                         case "NORTH":
-                            firstSpawnLocation.setYaw(180f);
+                            yaw = 180f;
                             break;
                         case "EAST":
-                            firstSpawnLocation.setYaw(270f);
+                            yaw = 270f;
                             break;
                         case "SOUTH":
-                            firstSpawnLocation.setYaw(0f);
+                            yaw = 0f;
                             break;
                         case "WEST":
-                            firstSpawnLocation.setYaw(90f);
+                            yaw = 90f;
                             break;
                         default:
-                            logDebug("Invalid direction in config: " + direction);
+                            logDebug(
+                                "Invalid direction in config: " + direction
+                            );
                             break;
                     }
                 }
-                logDebug("Loaded spawn location: " + formatLocationRaw(firstSpawnLocation));
+
+                firstSpawnLocation = new Location(
+                    plugin
+                        .getServer()
+                        .getWorld(config.getString("firstSpawn.world")),
+                    config.getDouble("firstSpawn.x"),
+                    config.getDouble("firstSpawn.y"),
+                    config.getDouble("firstSpawn.z"),
+                    yaw,
+                    0f
+                );
+                logDebug(
+                    "Loaded spawn location: " +
+                        formatLocationRaw(firstSpawnLocation)
+                );
             } catch (Exception e) {
-                plugin.getLogger().warning("Error loading spawn location: " + e.getMessage());
+                plugin
+                    .getLogger()
+                    .warning("Error loading spawn location: " + e.getMessage());
                 firstSpawnLocation = null;
             }
         }
@@ -69,10 +94,14 @@ public class FirstSpawnManager {
 
     public void saveConfig() {
         if (firstSpawnLocation != null) {
-            config.set("firstSpawn.world", firstSpawnLocation.getWorld().getName());
+            config.set(
+                "firstSpawn.world",
+                firstSpawnLocation.getWorld().getName()
+            );
             config.set("firstSpawn.x", firstSpawnLocation.getX());
             config.set("firstSpawn.y", firstSpawnLocation.getY());
             config.set("firstSpawn.z", firstSpawnLocation.getZ());
+            config.set("firstSpawn.yaw", firstSpawnLocation.getYaw());
 
             float yaw = firstSpawnLocation.getYaw();
             String direction = "";
@@ -93,6 +122,7 @@ public class FirstSpawnManager {
         config.set("welcome-message.enabled", welcomeMessageEnabled);
         config.set("welcome-message.prefix", welcomeMessagePrefix);
         config.set("welcome-message.message", welcomeMessage);
+        config.set("chat-prefix", chatPrefix);
         plugin.saveConfig();
     }
 
@@ -103,20 +133,29 @@ public class FirstSpawnManager {
     }
 
     public String formatLocation(Location loc) {
-        if (loc == null)
-            return "Not set";
-        return String.format("%s: %.1f, %.1f, %.1f", loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());
+        if (loc == null) return "Not set";
+        return String.format(
+            "%s: %.1f, %.1f, %.1f",
+            loc.getWorld().getName(),
+            loc.getX(),
+            loc.getY(),
+            loc.getZ()
+        );
     }
 
     private String formatLocationRaw(Location loc) {
-        if (loc == null)
-            return "Not set";
-        return String.format("%s: %.1f, %.1f, %.1f", loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ());
+        if (loc == null) return "Not set";
+        return String.format(
+            "%s: %.1f, %.1f, %.1f",
+            loc.getWorld().getName(),
+            loc.getX(),
+            loc.getY(),
+            loc.getZ()
+        );
     }
 
     public String getFormattedWelcomeMessage() {
-        if (!welcomeMessageEnabled || welcomeMessage.isEmpty())
-            return "";
+        if (!welcomeMessageEnabled || welcomeMessage.isEmpty()) return "";
 
         if (welcomeMessagePrefix != null && !welcomeMessagePrefix.isEmpty()) {
             return welcomeMessagePrefix + " " + welcomeMessage;

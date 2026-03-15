@@ -1,5 +1,6 @@
 package com.spectrasonic.FirstSpawnPaper.Utils;
 
+import com.spectrasonic.FirstSpawnPaper.Managers.MessageManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
@@ -9,17 +10,43 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.time.Duration;
+import java.util.Map;
 
 @SuppressWarnings("deprecation")
 public final class MessageUtils {
 
     public static final String DIVIDER = "<gray>----------------------------------------</gray>";
-    public static final String PREFIX = "<gray>[<gold>FirstSpawnPaper</gold>]</gray> <gold>»</gold> ";
+    public static String PREFIX = "<gray>[<gold>FirstSpawnPaper</gold>]</gray> <gold>»</gold> ";
 
     private static final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private static MessageManager messageManager;
+
+    public static void setPrefix(String prefix) {
+        PREFIX = prefix;
+    }
+
+    public static void setManager(MessageManager manager) {
+        messageManager = manager;
+    }
 
     private MessageUtils() {
         // Private constructor to prevent instantiation
+    }
+
+    public static void sendConfigMessage(CommandSender sender, String key) {
+        sender.sendMessage(miniMessage.deserialize(PREFIX + messageManager.getMessage(key)));
+    }
+
+    public static void sendConfigMessage(CommandSender sender, String key, Map<String, String> placeholders) {
+        sender.sendMessage(miniMessage.deserialize(PREFIX + messageManager.getMessage(key, placeholders)));
+    }
+
+    public static void sendRawConfigMessage(CommandSender sender, String key) {
+        sender.sendMessage(miniMessage.deserialize(messageManager.getMessage(key)));
+    }
+
+    public static void sendRawConfigMessage(CommandSender sender, String key, Map<String, String> placeholders) {
+        sender.sendMessage(miniMessage.deserialize(messageManager.getMessage(key, placeholders)));
     }
 
     public static void sendMessage(CommandSender sender, String message) {

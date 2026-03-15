@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import java.util.HashMap;
+import java.util.Map;
 
 @CommandAlias("firstspawn|fs")
 @RequiredArgsConstructor
@@ -18,32 +20,28 @@ public class FirstSpawnCommand extends BaseCommand {
     @Default
     @Description("Mostrar ayuda de FirstSpawn")
     public void onDefault(CommandSender sender) {
-        MessageUtils.sendMessage(sender, "<yellow>FirstSpawn Commands:</yellow>");
-        MessageUtils.sendMessage(sender, "<gray>/firstspawn set</gray> - <white>Setear la ubicación de spawn</white>");
-        MessageUtils.sendMessage(sender,
-                "<gray>/firstspawn status</gray> - <white>Mostrar la configuración actual</white>");
-        MessageUtils.sendMessage(sender,
-                "<gray>/firstspawn test</gray> - <white>Teleportarse para prueba al spawn</white>");
-        MessageUtils.sendMessage(sender,
-                "<gray>/firstspawn toggle</gray> - <white>Habilitar/Deshabilitar el plugin</white>");
-        MessageUtils.sendMessage(sender,
-                "<gray>/firstspawn forcespawn <true|false></gray> - <white>Forzar spawn en cada entrada al servidor</white>");
-        MessageUtils.sendMessage(sender,
-                "<gray>/firstspawn welcomemessage <true|false></gray> - <white>Activar/Desactivar el mensaje de bienvenida</white>");
-        MessageUtils.sendMessage(sender, "<gray>/firstspawn reload</gray> - <white>Recargar la configuración</white>");
-        MessageUtils.sendMessage(sender, "<gray>/firstspawn debug</gray> - <white>Alternar el modo debug</white>");
+        MessageUtils.sendConfigMessage(sender, "help.header");
+        MessageUtils.sendConfigMessage(sender, "help.set");
+        MessageUtils.sendConfigMessage(sender, "help.status");
+        MessageUtils.sendConfigMessage(sender, "help.test");
+        MessageUtils.sendConfigMessage(sender, "help.toggle");
+        MessageUtils.sendConfigMessage(sender, "help.forcespawn");
+        MessageUtils.sendConfigMessage(sender, "help.welcomemessage");
+        MessageUtils.sendConfigMessage(sender, "help.reload");
+        MessageUtils.sendConfigMessage(sender, "help.debug");
     }
 
     @Subcommand("set")
     @Description("Establecer la ubicación de spawn")
     @CommandPermission("firstspawn.set")
     public void onSet(Player player) {
-        Location loc = player.getLocation();
+        Location loc = player.getLocation().clone();
+        loc.setPitch(0f);
         manager.setFirstSpawnLocation(loc);
         manager.saveConfig();
-        MessageUtils.sendMessage(player,
-                "<green>La ubicación de primer spawn ha sido establecida a tu posición actual:</green> <yellow>"
-                        + manager.formatLocation(loc) + "</yellow>");
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("location", manager.formatLocation(loc));
+        MessageUtils.sendConfigMessage(player, "spawn.set", placeholders);
         manager.logDebug("Set spawn location to: " + manager.formatLocation(loc));
     }
 
@@ -51,21 +49,35 @@ public class FirstSpawnCommand extends BaseCommand {
     @Description("Mostrar el estado de FirstSpawn")
     @CommandPermission("firstspawn.status")
     public void onStatus(CommandSender sender) {
-        MessageUtils.sendMessage(sender, "<yellow>Estado de FirstSpawn:</yellow>");
-        MessageUtils.sendMessage(sender,
-                "<gray>Plugin habilitado:</gray> " + (manager.isEnabled() ? "<green>Sí</green>" : "<red>No</red>"));
-        MessageUtils.sendMessage(sender, "<gray>Modo debug:</gray> "
-                + (manager.isDebug() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>"));
-        MessageUtils.sendMessage(sender, "<gray>Force spawn:</gray> "
-                + (manager.isForceSpawn() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>"));
-        MessageUtils.sendMessage(sender, "<gray>Ubicación actual del spawn:</gray> <yellow>"
-                + manager.formatLocation(manager.getFirstSpawnLocation()) + "</yellow>");
-        MessageUtils.sendMessage(sender, "<gray>Mensaje de bienvenida:</gray> "
-                + (manager.isWelcomeMessageEnabled() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>"));
+        MessageUtils.sendConfigMessage(sender, "status.header");
+
+        Map<String, String> placeholders;
+        placeholders = new HashMap<>();
+        placeholders.put("status", manager.isEnabled() ? "<green>Sí</green>" : "<red>No</red>");
+        MessageUtils.sendConfigMessage(sender, "status.enabled", placeholders);
+
+        placeholders = new HashMap<>();
+        placeholders.put("status", manager.isDebug() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "status.debug", placeholders);
+
+        placeholders = new HashMap<>();
+        placeholders.put("status", manager.isForceSpawn() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "status.force_spawn", placeholders);
+
+        placeholders = new HashMap<>();
+        placeholders.put("location", manager.formatLocation(manager.getFirstSpawnLocation()));
+        MessageUtils.sendConfigMessage(sender, "status.location", placeholders);
+
+        placeholders = new HashMap<>();
+        placeholders.put("status", manager.isWelcomeMessageEnabled() ? "<green>Habilitado</green>" : "<red>Deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "status.welcome", placeholders);
+
         if (manager.isWelcomeMessageEnabled()) {
             String formattedMessage = manager.getFormattedWelcomeMessage();
             if (!formattedMessage.isEmpty()) {
-                MessageUtils.sendMessage(sender, "<gray>  Mensaje:</gray> " + formattedMessage);
+                placeholders = new HashMap<>();
+                placeholders.put("message", formattedMessage);
+                MessageUtils.sendConfigMessage(sender, "status.welcome_message", placeholders);
             }
         }
     }
@@ -75,11 +87,11 @@ public class FirstSpawnCommand extends BaseCommand {
     @CommandPermission("firstspawn.test")
     public void onTest(Player player) {
         if (manager.getFirstSpawnLocation() == null) {
-            MessageUtils.sendMessage(player, "<red>La ubicación de spawn no está establecida!</red>");
+            MessageUtils.sendConfigMessage(player, "spawn.not_set");
             return;
         }
         player.teleport(manager.getFirstSpawnLocation());
-        MessageUtils.sendMessage(player, "<green>Teletransportado a la ubicación de primer spawn!</green>");
+        MessageUtils.sendConfigMessage(player, "spawn.teleported");
         String formattedWelcomeMessage = manager.getFormattedWelcomeMessage();
         if (!formattedWelcomeMessage.isEmpty()) {
             MessageUtils.sendRawMessage(player, formattedWelcomeMessage);
@@ -92,17 +104,20 @@ public class FirstSpawnCommand extends BaseCommand {
     public void onToggle(CommandSender sender) {
         manager.setEnabled(!manager.isEnabled());
         manager.saveConfig();
-        MessageUtils.sendMessage(sender, "FirstSpawn ahora está "
-                + (manager.isEnabled() ? "<green>habilitado</green>" : "<red>deshabilitado</red>"));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("status", manager.isEnabled() ? "<green>habilitado</green>" : "<red>deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "toggle.success", placeholders);
     }
 
     @Subcommand("debug")
     @Description("Alternar el modo debug")
+    @CommandPermission("firstspawn.debug")
     public void onDebug(CommandSender sender) {
         manager.setDebug(!manager.isDebug());
         manager.saveConfig();
-        MessageUtils.sendMessage(sender, "Modo debug ahora está "
-                + (manager.isDebug() ? "<green>habilitado</green>" : "<red>deshabilitado</red>"));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("status", manager.isDebug() ? "<green>habilitado</green>" : "<red>deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "toggle.debug", placeholders);
     }
 
     @Subcommand("forcespawn")
@@ -112,14 +127,13 @@ public class FirstSpawnCommand extends BaseCommand {
     public void onForceSpawn(CommandSender sender, boolean value) {
         manager.setForceSpawn(value);
         manager.saveConfig();
-        MessageUtils.sendMessage(sender, "<gray>Force spawn ahora está</gray> "
-                + (value ? "<green>habilitado</green>" : "<red>deshabilitado</red>"));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("status", value ? "<green>habilitado</green>" : "<red>deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "forcespawn.success", placeholders);
         if (value) {
-            MessageUtils.sendMessage(sender,
-                    "<yellow>Los jugadores serán teletransportados al spawn cada vez que entren al servidor</yellow>");
+            MessageUtils.sendConfigMessage(sender, "forcespawn.enabled");
         } else {
-            MessageUtils.sendMessage(sender,
-                    "<yellow>Solo los jugadores nuevos serán teletransportados al spawn</yellow>");
+            MessageUtils.sendConfigMessage(sender, "forcespawn.disabled");
         }
     }
 
@@ -130,14 +144,13 @@ public class FirstSpawnCommand extends BaseCommand {
     public void onWelcomeMessage(CommandSender sender, boolean value) {
         manager.setWelcomeMessageEnabled(value);
         manager.saveConfig();
-        MessageUtils.sendMessage(sender, "<gray>Mensaje de bienvenida ahora está</gray> "
-                + (value ? "<green>habilitado</green>" : "<red>deshabilitado</red>"));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("status", value ? "<green>habilitado</green>" : "<red>deshabilitado</red>");
+        MessageUtils.sendConfigMessage(sender, "welcomemessage.success", placeholders);
         if (value) {
-            MessageUtils.sendMessage(sender,
-                    "<yellow>Los jugadores verán el mensaje de bienvenida al entrar al servidor</yellow>");
+            MessageUtils.sendConfigMessage(sender, "welcomemessage.enabled");
         } else {
-            MessageUtils.sendMessage(sender,
-                    "<yellow>Los jugadores no verán el mensaje de bienvenida</yellow>");
+            MessageUtils.sendConfigMessage(sender, "welcomemessage.disabled");
         }
     }
 
@@ -146,6 +159,8 @@ public class FirstSpawnCommand extends BaseCommand {
     @CommandPermission("firstspawn.reload")
     public void onReload(CommandSender sender) {
         manager.loadConfig();
-        MessageUtils.sendMessage(sender, "<green>La configuración ha sido recargada!</green>");
+        MessageUtils.setPrefix(manager.getChatPrefix());
+        MessageUtils.setManager(manager.getMessageManager());
+        MessageUtils.sendConfigMessage(sender, "reload.success");
     }
 }

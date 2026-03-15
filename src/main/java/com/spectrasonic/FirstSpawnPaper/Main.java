@@ -14,10 +14,13 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        
+
         saveDefaultConfig();
         manager = new FirstSpawnManager(this);
         manager.loadConfig();
+
+        MessageUtils.setPrefix(manager.getChatPrefix());
+        MessageUtils.setManager(manager.getMessageManager());
 
         if (manager.isDebug()) {
             getLogger().info("[DEBUG] FirstSpawn has been enabled!");
